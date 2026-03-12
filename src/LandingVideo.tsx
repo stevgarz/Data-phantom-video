@@ -55,7 +55,7 @@ const SCENES: Scene[] = [
   { kind: "title", text: "Manually",                  dur: titleDuration("Manually") },
   { kind: "clip",  file: "2.mp4",                     dur: CLIP_DUR["2.mp4"] },
 
-  { kind: "title", text: "With AI",                   dur: titleDuration("With AI") },
+  { kind: "title", text: "Extract with AI",           dur: titleDuration("Extract with AI") },
   { kind: "clip",  file: "4 AI scan.mp4",             dur: CLIP_DUR["4 AI scan.mp4"] },
 
   { kind: "title", text: "Your way",                  dur: titleDuration("Your way") },
