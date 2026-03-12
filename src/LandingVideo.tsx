@@ -20,14 +20,17 @@ function titleDuration(text: string): number {
   return TYPE_START + totalChars * FRAMES_PER_CHAR + HOLD_BUFFER;
 }
 
-// Outro: type "TAKE CONTROL" → hold + 3 blinks → backspace all → type "DATA PHANTOM" → hold + 3 blinks
+// Outro: type "TAKE CONTROL" → hold + 1 blink → backspace all → type "DATA PHANTOM" → hold + 3 blinks
 const OUTRO_TEXT_1 = "TAKE CONTROL";
 const OUTRO_TEXT_2 = "DATA PHANTOM";
+const OUTRO_DATA_LEN = 5; // "DATA " – PHANTOM is dimmer like extension logo
 const OUTRO_PHASE1_END = TYPE_START + OUTRO_TEXT_1.length * FRAMES_PER_CHAR;  // type first line
-const OUTRO_HOLD_BLINKS = 3; // cursor blinks (15f on, 15f off = 30f per blink)
-const OUTRO_HOLD_FRAMES = OUTRO_HOLD_BLINKS * 30; // 90 frames = 3 blinks
-const OUTRO_PHASE1_HOLD_END = OUTRO_PHASE1_END + OUTRO_HOLD_FRAMES; // hold "TAKE CONTROL", cursor blinks 3x
-const OUTRO_PHASE2_END = OUTRO_PHASE1_HOLD_END + OUTRO_TEXT_1.length * FRAMES_PER_CHAR; // backspace
+const OUTRO_HOLD_AFTER_TAKE_CONTROL = 30; // 1 blink (15f on, 15f off)
+const OUTRO_HOLD_BLINKS = 3; // cursor blinks at end (15f on, 15f off = 30f per blink)
+const OUTRO_HOLD_FRAMES = OUTRO_HOLD_BLINKS * 30; // 90 frames = 3 blinks after "DATA PHANTOM"
+const OUTRO_PHASE1_HOLD_END = OUTRO_PHASE1_END + OUTRO_HOLD_AFTER_TAKE_CONTROL; // hold "TAKE CONTROL", cursor blinks 1x
+const FRAMES_PER_CHAR_BACKSPACE = Math.floor(FRAMES_PER_CHAR / 2); // backspace 2x faster
+const OUTRO_PHASE2_END = OUTRO_PHASE1_HOLD_END + OUTRO_TEXT_1.length * FRAMES_PER_CHAR_BACKSPACE; // backspace
 const OUTRO_PHASE3_END = OUTRO_PHASE2_END + OUTRO_TEXT_2.length * FRAMES_PER_CHAR; // type "DATA PHANTOM"
 function outroDuration(): number {
   return OUTRO_PHASE3_END + OUTRO_HOLD_FRAMES; // hold "DATA PHANTOM", cursor blinks 3x
@@ -107,7 +110,7 @@ const TitleCard: React.FC<{ text: string; outro?: boolean }> = ({ text, outro })
       displayText = OUTRO_TEXT_1;
       showCursor = cursorBlink;
     } else if (frame < OUTRO_PHASE2_END) {
-      const backspaced = Math.floor((frame - OUTRO_PHASE1_HOLD_END) / FRAMES_PER_CHAR);
+      const backspaced = Math.floor((frame - OUTRO_PHASE1_HOLD_END) / FRAMES_PER_CHAR_BACKSPACE);
       const visible = Math.max(0, OUTRO_TEXT_1.length - backspaced);
       displayText = OUTRO_TEXT_1.slice(0, visible);
       showCursor = cursorBlink && visible > 0;
@@ -129,8 +132,23 @@ const TitleCard: React.FC<{ text: string; outro?: boolean }> = ({ text, outro })
           }}
         >
           <div style={{ fontSize: baseFontSize, letterSpacing: 4, lineHeight: 1.4 }}>
-            {displayText}
-            <span style={{ visibility: showCursor ? "visible" : "hidden" }}>|</span>
+            {frame >= OUTRO_PHASE2_END ? (() => {
+              const v = Math.min(OUTRO_TEXT_2.length, Math.max(0, Math.floor((frame - OUTRO_PHASE2_END) / FRAMES_PER_CHAR)));
+              const dataVisible = Math.min(OUTRO_DATA_LEN, v);
+              const phantomVisible = Math.max(0, v - OUTRO_DATA_LEN);
+              return (
+                <>
+                  {OUTRO_TEXT_2.slice(0, dataVisible)}
+                  <span style={{ opacity: 0.55 }}>{OUTRO_TEXT_2.slice(OUTRO_DATA_LEN, OUTRO_DATA_LEN + phantomVisible)}</span>
+                  <span style={{ visibility: showCursor ? "visible" : "hidden" }}>|</span>
+                </>
+              );
+            })() : (
+              <>
+                {displayText}
+                <span style={{ visibility: showCursor ? "visible" : "hidden" }}>|</span>
+              </>
+            )}
           </div>
         </div>
       </AbsoluteFill>
