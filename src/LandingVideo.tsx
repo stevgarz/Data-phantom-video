@@ -50,11 +50,12 @@ function titleDurationWithThen(text: string, thenText: string): number {
 
 const CLIP_DUR = {
   "1.mp4": Math.round(6.76 * FPS),             // legacy
-  "9.mp4": Math.round(6.76 * FPS),             // Scrape
+  "9.mp4": Math.round(5 * FPS),               // Scrape – match your video length (was 6.76s)
   "2.mp4": Math.round(1.69 * FPS),             //  51 – Manually
   "4 AI scan.mp4": Math.round(1.79 * FPS),     //  54 – With AI
   "5 AI extraction.mp4": Math.round(3.98 * FPS), // 119 – Your way (legacy)
-  "7.mp4": Math.round(5 * FPS),  // extension segment – set to your video length in frames
+  "7.mp4": Math.round(5 * FPS),  // legacy
+  "10.mp4": Math.round(5 * FPS), // extension segment – set to your video length in frames
   "8.mp4": Math.round(3.98 * FPS), // AI extract – Your way
 };
 
@@ -76,7 +77,6 @@ const SCENES: Scene[] = [
   { kind: "clip",  file: "8.mp4",                     dur: CLIP_DUR["8.mp4"] },
 
   { kind: "title", text: "Use your own\nGemini keys", dur: titleDuration("Use your own\nGemini keys") },
-  { kind: "clip",  file: "7.mp4",                     dur: CLIP_DUR["7.mp4"] },
 
   { kind: "title", text: "Take control",              dur: outroDuration(), outro: true },
 ];
