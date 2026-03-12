@@ -1,0 +1,28 @@
+{
+  "name": "data-phantom-video",
+  "version": "1.0.0",
+  "description": "Remotion video project",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "render": "remotion render"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/zod-types": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/web": "0.0.166",
+    "eslint": "^9.0.0",
+    "typescript": "^5.0.0"
+  },
+  "private": true
+}

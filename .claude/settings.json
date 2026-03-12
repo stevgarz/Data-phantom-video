@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx remotion:*)",
+      "Bash(node -e \":*)",
+      "Bash(done)"
+    ]
+  }
+}

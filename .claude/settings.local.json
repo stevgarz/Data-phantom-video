@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx remotion ffprobe public/1.mp4)"
+    ]
+  }
+}
