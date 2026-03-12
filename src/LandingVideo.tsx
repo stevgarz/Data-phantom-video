@@ -40,8 +40,9 @@ const CLIP_DUR = {
   "1.mp4": Math.round(6.76 * FPS),             // 203 – Scrape
   "2.mp4": Math.round(1.69 * FPS),             //  51 – Manually
   "4 AI scan.mp4": Math.round(1.79 * FPS),     //  54 – With AI
-  "5 AI extraction.mp4": Math.round(3.98 * FPS), // 119 – Your way
+  "5 AI extraction.mp4": Math.round(3.98 * FPS), // 119 – Your way (legacy)
   "7.mp4": Math.round(5 * FPS),  // extension segment – set to your video length in frames
+  "8.mp4": Math.round(3.98 * FPS), // AI extract – Your way
 };
 
 type TitleScene = { kind: "title"; text: string; outro?: boolean; dur: number };
@@ -59,7 +60,7 @@ const SCENES: Scene[] = [
   { kind: "clip",  file: "4 AI scan.mp4",             dur: CLIP_DUR["4 AI scan.mp4"] },
 
   { kind: "title", text: "Your way",                  dur: titleDuration("Your way") },
-  { kind: "clip",  file: "5 AI extraction.mp4",       dur: CLIP_DUR["5 AI extraction.mp4"] },
+  { kind: "clip",  file: "8.mp4",                     dur: CLIP_DUR["8.mp4"] },
 
   { kind: "title", text: "Use your own\nGemini keys", dur: titleDuration("Use your own\nGemini keys") },
   { kind: "clip",  file: "7.mp4",                     dur: CLIP_DUR["7.mp4"], zoom: true },
@@ -225,7 +226,8 @@ const CROP: Record<string, { scale: number; ox: string; oy: string }> = {
   "1.mp4":               { scale: 1.58, ox: "50%", oy: "50%" }, // browser ~1220px wide
   "2.mp4":               { scale: 1.90, ox: "50%", oy: "50%" }, // browser ~1015px wide
   "4 AI scan.mp4":       { scale: 1.58, ox: "50%", oy: "50%" }, // same layout as 1
-  "5 AI extraction.mp4": { scale: 1.62, ox: "50%", oy: "50%" }, // browser ~1185px wide
+  "5 AI extraction.mp4": { scale: 1.62, ox: "50%", oy: "50%" }, // legacy
+  "8.mp4":               { scale: 1.62, ox: "50%", oy: "50%" }, // AI extract
 };
 
 // ── Video Clip ────────────────────────────────────────────────
