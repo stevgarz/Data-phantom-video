@@ -36,8 +36,21 @@ function outroDuration(): number {
   return OUTRO_PHASE3_END + OUTRO_HOLD_FRAMES; // hold "DATA PHANTOM", cursor blinks 3x
 }
 
+function totalCharCount(text: string): number {
+  const lines = text.toUpperCase().split("\n");
+  return lines.reduce((acc, l) => acc + l.length, 0) + Math.max(0, lines.length - 1);
+}
+
+function titleDurationWithThen(text: string, thenText: string): number {
+  const n1 = totalCharCount(text);
+  const n2 = totalCharCount(thenText);
+  const holdFrames = 30; // 1 blink after first line
+  return TYPE_START + n1 * FRAMES_PER_CHAR + holdFrames + n1 * FRAMES_PER_CHAR_BACKSPACE + n2 * FRAMES_PER_CHAR + HOLD_BUFFER;
+}
+
 const CLIP_DUR = {
-  "1.mp4": Math.round(6.76 * FPS),             // 203 – Scrape
+  "1.mp4": Math.round(6.76 * FPS),             // legacy
+  "9.mp4": Math.round(6.76 * FPS),             // Scrape
   "2.mp4": Math.round(1.69 * FPS),             //  51 – Manually
   "4 AI scan.mp4": Math.round(1.79 * FPS),     //  54 – With AI
   "5 AI extraction.mp4": Math.round(3.98 * FPS), // 119 – Your way (legacy)
@@ -45,13 +58,13 @@ const CLIP_DUR = {
   "8.mp4": Math.round(3.98 * FPS), // AI extract – Your way
 };
 
-type TitleScene = { kind: "title"; text: string; outro?: boolean; dur: number };
+type TitleScene = { kind: "title"; text: string; outro?: boolean; thenText?: string; dur: number };
 type ClipScene  = { kind: "clip";  file: keyof typeof CLIP_DUR; zoom?: boolean; dur: number };
 type Scene = TitleScene | ClipScene;
 
 const SCENES: Scene[] = [
   { kind: "title", text: "Scrape",                    dur: titleDuration("Scrape") },
-  { kind: "clip",  file: "1.mp4",                     dur: CLIP_DUR["1.mp4"] },
+  { kind: "clip",  file: "9.mp4",                     dur: CLIP_DUR["9.mp4"] },
 
   { kind: "title", text: "Manually",                  dur: titleDuration("Manually") },
   { kind: "clip",  file: "2.mp4",                     dur: CLIP_DUR["2.mp4"] },
@@ -63,7 +76,7 @@ const SCENES: Scene[] = [
   { kind: "clip",  file: "8.mp4",                     dur: CLIP_DUR["8.mp4"] },
 
   { kind: "title", text: "Use your own\nGemini keys", dur: titleDuration("Use your own\nGemini keys") },
-  { kind: "clip",  file: "7.mp4",                     dur: CLIP_DUR["7.mp4"], zoom: true },
+  { kind: "clip",  file: "7.mp4",                     dur: CLIP_DUR["7.mp4"] },
 
   { kind: "title", text: "Take control",              dur: outroDuration(), outro: true },
 ];
@@ -87,7 +100,7 @@ const EXTENSION_STYLE = {
 };
 
 // ── Title Card ────────────────────────────────────────────────
-const TitleCard: React.FC<{ text: string; outro?: boolean }> = ({ text, outro }) => {
+const TitleCard: React.FC<{ text: string; outro?: boolean; thenText?: string }> = ({ text, outro, thenText }) => {
   const frame = useCurrentFrame();
 
   const opacity = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: "clamp" });
@@ -151,6 +164,81 @@ const TitleCard: React.FC<{ text: string; outro?: boolean }> = ({ text, outro })
               </>
             )}
           </div>
+        </div>
+      </AbsoluteFill>
+    );
+  }
+
+  // Title with thenText: type text → hold 1 blink → backspace → type thenText → hold
+  if (thenText) {
+    const fullStr1 = text.toUpperCase().split("\n").join("\n");
+    const text2 = thenText.toUpperCase();
+    const n1 = totalCharCount(text);
+    const n2 = totalCharCount(thenText);
+    const P1_END = TYPE_START + n1 * FRAMES_PER_CHAR;
+    const HOLD_END = P1_END + 30;
+    const P2_END = HOLD_END + n1 * FRAMES_PER_CHAR_BACKSPACE;
+    let displayContent: React.ReactNode;
+    let showCursor = false;
+    if (frame < P1_END) {
+      const visibleCount = Math.min(n1, Math.max(0, Math.floor((frame - TYPE_START) / FRAMES_PER_CHAR)));
+      const lines1 = text.toUpperCase().split("\n");
+      let idx = 0;
+      displayContent = (
+        <>
+          {lines1.map((line, i) => {
+            const lineLen = line.length;
+            const start = idx;
+            idx += lineLen + (i < lines1.length - 1 ? 1 : 0);
+            const lineVisible = Math.min(lineLen, Math.max(0, visibleCount - start));
+            const endOfLine = start + lineLen + (i < lines1.length - 1 ? 1 : 0);
+            const cur = cursorBlink && visibleCount > start && visibleCount <= endOfLine;
+            return (
+              <div key={i} style={{ fontSize: baseFontSize, letterSpacing: 4, lineHeight: 1.4 }}>
+                {line.slice(0, lineVisible)}
+                <span style={{ visibility: cur ? "visible" : "hidden" }}>|</span>
+              </div>
+            );
+          })}
+        </>
+      );
+    } else if (frame < HOLD_END) {
+      displayContent = (
+        <>
+          {text.toUpperCase().split("\n").map((line, i) => (
+            <div key={i} style={{ fontSize: baseFontSize, letterSpacing: 4, lineHeight: 1.4 }}>
+              {line}
+              {i === text.split("\n").length - 1 ? <span style={{ visibility: cursorBlink ? "visible" : "hidden" }}>|</span> : null}
+            </div>
+          ))}
+        </>
+      );
+      showCursor = cursorBlink;
+    } else if (frame < P2_END) {
+      const backspaced = Math.floor((frame - HOLD_END) / FRAMES_PER_CHAR_BACKSPACE);
+      const visible = Math.max(0, n1 - backspaced);
+      showCursor = cursorBlink && visible > 0;
+      displayContent = (
+        <div style={{ fontSize: baseFontSize, letterSpacing: 4, lineHeight: 1.4, whiteSpace: "pre" }}>
+          {fullStr1.slice(0, visible)}
+          <span style={{ visibility: showCursor ? "visible" : "hidden" }}>|</span>
+        </div>
+      );
+    } else {
+      const visible = Math.min(n2, Math.max(0, Math.floor((frame - P2_END) / FRAMES_PER_CHAR)));
+      showCursor = cursorBlink && visible > 0;
+      displayContent = (
+        <div style={{ fontSize: baseFontSize, letterSpacing: 4, lineHeight: 1.4 }}>
+          {text2.slice(0, visible)}
+          <span style={{ visibility: showCursor ? "visible" : "hidden" }}>|</span>
+        </div>
+      );
+    }
+    return (
+      <AbsoluteFill style={{ backgroundColor: "#0a0a0a", justifyContent: "center", alignItems: "center" }}>
+        <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(0, 255, 65, 0.08) 0%, transparent 70%)", opacity }} />
+        <div style={{ opacity, transform: `scale(${scale})`, textAlign: "center", ...EXTENSION_STYLE }}>
+          <div style={{ letterSpacing: 4, lineHeight: 1.4 }}>{displayContent}</div>
         </div>
       </AbsoluteFill>
     );
@@ -223,7 +311,8 @@ const TitleCard: React.FC<{ text: string; outro?: boolean }> = ({ text, outro })
 // Each recording has white OS-desktop space around the browser/UI content.
 // Scaling up fills the canvas and hides the white borders.
 const CROP: Record<string, { scale: number; ox: string; oy: string }> = {
-  "1.mp4":               { scale: 1.58, ox: "50%", oy: "50%" }, // browser ~1220px wide
+  "1.mp4":               { scale: 1.58, ox: "50%", oy: "50%" }, // legacy
+  "9.mp4":               { scale: 1.58, ox: "50%", oy: "50%" }, // Scrape
   "2.mp4":               { scale: 1.90, ox: "50%", oy: "50%" }, // browser ~1015px wide
   "4 AI scan.mp4":       { scale: 1.58, ox: "50%", oy: "50%" }, // same layout as 1
   "5 AI extraction.mp4": { scale: 1.62, ox: "50%", oy: "50%" }, // legacy
@@ -308,7 +397,7 @@ export const LandingVideo: React.FC = () => {
       {SCENES.map((scene, i) => (
         <Sequence key={i} from={STARTS[i]} durationInFrames={scene.dur}>
           {scene.kind === "title" ? (
-            <TitleCard text={scene.text} outro={scene.outro} />
+            <TitleCard text={scene.text} outro={scene.outro} thenText={scene.thenText} />
           ) : (
             <VideoClip file={scene.file} zoom={scene.zoom} />
           )}
