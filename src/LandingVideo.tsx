@@ -22,8 +22,8 @@ function titleDuration(text: string): number {
 
 // Outro: type "TAKE CONTROL" → hold + 1 blink → backspace all → type "DATA PHANTOM" → hold + 3 blinks
 const OUTRO_TEXT_1 = "TAKE CONTROL";
-const OUTRO_TEXT_2 = "DATA PHANTOM";
-const OUTRO_DATA_LEN = 5; // "DATA " – PHANTOM is dimmer like extension logo
+const OUTRO_TEXT_2 = "DATAPHANTOM";
+const OUTRO_DATA_LEN = 4; // "DATA" – PHANTOM is dimmer like extension logo
 const OUTRO_PHASE1_END = TYPE_START + OUTRO_TEXT_1.length * FRAMES_PER_CHAR;  // type first line
 const OUTRO_HOLD_AFTER_TAKE_CONTROL = 30; // 1 blink (15f on, 15f off)
 const OUTRO_HOLD_BLINKS = 3; // cursor blinks at end (15f on, 15f off = 30f per blink)
@@ -134,7 +134,7 @@ const TitleCard: React.FC<{ text: string; outro?: boolean; thenText?: string }> 
       showCursor = cursorBlink && visible > 0;
     }
     return (
-      <AbsoluteFill style={{ backgroundColor: "#0a0a0a", justifyContent: "center", alignItems: "center" }}>
+      <AbsoluteFill style={{ backgroundColor: "#000000", justifyContent: "center", alignItems: "center" }}>
         <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(0, 255, 65, 0.08) 0%, transparent 70%)", opacity }} />
         <div
           style={{
@@ -235,7 +235,7 @@ const TitleCard: React.FC<{ text: string; outro?: boolean; thenText?: string }> 
       );
     }
     return (
-      <AbsoluteFill style={{ backgroundColor: "#0a0a0a", justifyContent: "center", alignItems: "center" }}>
+      <AbsoluteFill style={{ backgroundColor: "#000000", justifyContent: "center", alignItems: "center" }}>
         <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(0, 255, 65, 0.08) 0%, transparent 70%)", opacity }} />
         <div style={{ opacity, transform: `scale(${scale})`, textAlign: "center", ...EXTENSION_STYLE }}>
           <div style={{ letterSpacing: 4, lineHeight: 1.4 }}>{displayContent}</div>
@@ -253,7 +253,7 @@ const TitleCard: React.FC<{ text: string; outro?: boolean; thenText?: string }> 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "#0a0a0a",
+        backgroundColor: "#000000",
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -345,7 +345,7 @@ const VideoClip: React.FC<{ file: string; zoom?: boolean }> = ({ file, zoom }) =
 
     return (
       <AbsoluteFill style={{ opacity: fadeIn, overflow: "hidden" }}>
-        <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }} />
+        <AbsoluteFill style={{ backgroundColor: "#000000" }} />
         <div style={{ position: "absolute", inset: 0 }}>
           <OffthreadVideo src={staticFile(file)} style={videoStyle} />
         </div>
@@ -393,7 +393,7 @@ const VideoClip: React.FC<{ file: string; zoom?: boolean }> = ({ file, zoom }) =
 // ── Composition root ──────────────────────────────────────────
 export const LandingVideo: React.FC = () => {
   return (
-    <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
+    <AbsoluteFill style={{ backgroundColor: "#000000" }}>
       {SCENES.map((scene, i) => (
         <Sequence key={i} from={STARTS[i]} durationInFrames={scene.dur}>
           {scene.kind === "title" ? (
