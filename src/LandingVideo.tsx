@@ -20,20 +20,30 @@ function titleDuration(text: string): number {
   return TYPE_START + totalChars * FRAMES_PER_CHAR + HOLD_BUFFER;
 }
 
-// Outro: type "TAKE CONTROL" → hold + 1 blink → backspace all → type "DATA PHANTOM" → hold + 3 blinks
-const OUTRO_TEXT_1 = "TAKE CONTROL";
+// Outro: type "TAKE CONTROL" → hold 1 blink → backspace → type "AND SAVE" → hold 1 blink → backspace → type "DATAPHANTOM" → hold 3 blinks
+const OUTRO_A = "TAKE CONTROL";
+const OUTRO_B = "AND SAVE";
 const OUTRO_TEXT_2 = "DATAPHANTOM";
 const OUTRO_DATA_LEN = 4; // "DATA" – PHANTOM is dimmer like extension logo
-const OUTRO_PHASE1_END = TYPE_START + OUTRO_TEXT_1.length * FRAMES_PER_CHAR;  // type first line
-const OUTRO_HOLD_AFTER_TAKE_CONTROL = 30; // 1 blink (15f on, 15f off)
-const OUTRO_HOLD_BLINKS = 3; // cursor blinks at end (15f on, 15f off = 30f per blink)
-const OUTRO_HOLD_FRAMES = OUTRO_HOLD_BLINKS * 30; // 90 frames = 3 blinks after "DATA PHANTOM"
-const OUTRO_PHASE1_HOLD_END = OUTRO_PHASE1_END + OUTRO_HOLD_AFTER_TAKE_CONTROL; // hold "TAKE CONTROL", cursor blinks 1x
+const OUTRO_HOLD_BLINK = 30; // 1 blink (15f on, 15f off)
+const OUTRO_HOLD_BLINKS = 3; // cursor blinks at end
+const OUTRO_HOLD_FRAMES = OUTRO_HOLD_BLINKS * 30;
 const FRAMES_PER_CHAR_BACKSPACE = Math.floor(FRAMES_PER_CHAR / 2); // backspace 2x faster
-const OUTRO_PHASE2_END = OUTRO_PHASE1_HOLD_END + OUTRO_TEXT_1.length * FRAMES_PER_CHAR_BACKSPACE; // backspace
-const OUTRO_PHASE3_END = OUTRO_PHASE2_END + OUTRO_TEXT_2.length * FRAMES_PER_CHAR; // type "DATA PHANTOM"
+
+const OUTRO_PHASE1_END = TYPE_START + OUTRO_A.length * FRAMES_PER_CHAR; // type "TAKE CONTROL"
+const OUTRO_PHASE1_HOLD_END = OUTRO_PHASE1_END + OUTRO_HOLD_BLINK;
+const OUTRO_PHASE2_END = OUTRO_PHASE1_HOLD_END + OUTRO_A.length * FRAMES_PER_CHAR_BACKSPACE; // backspace A
+const OUTRO_PHASE3_END = OUTRO_PHASE2_END + OUTRO_B.length * FRAMES_PER_CHAR; // type "AND SAVE"
+const OUTRO_PHASE3_HOLD_END = OUTRO_PHASE3_END + OUTRO_HOLD_BLINK;
+const OUTRO_PHASE4_END = OUTRO_PHASE3_HOLD_END + OUTRO_B.length * FRAMES_PER_CHAR_BACKSPACE; // backspace B
+const OUTRO_PHASE5_END = OUTRO_PHASE4_END + OUTRO_TEXT_2.length * FRAMES_PER_CHAR; // type "DATAPHANTOM"
+/** After typing finishes: pause, then glitch (extension popup.css keyframes, scaled for 1080p) */
+const OUTRO_GLITCH_DELAY = 30; // 1s still — clear “typing done” before glitch
+const OUTRO_GLITCH_FRAMES = Math.round(0.3 * FPS); // 0.3s ease
+const GLITCH_PX = 4; // multiply extension’s ±2px so motion reads on large title
+
 function outroDuration(): number {
-  return OUTRO_PHASE3_END + OUTRO_HOLD_FRAMES; // hold "DATA PHANTOM", cursor blinks 3x
+  return OUTRO_PHASE5_END + OUTRO_HOLD_FRAMES;
 }
 
 function totalCharCount(text: string): number {
@@ -112,24 +122,36 @@ const TitleCard: React.FC<{ text: string; outro?: boolean; thenText?: string }> 
   // Cursor: slow, regular blink
   const cursorBlink = Math.floor(frame / 15) % 2 === 0;
 
-  // Outro: type "TAKE CONTROL" → hold + 3 blinks → backspace → type "DATA PHANTOM" → hold + 3 blinks
+  // Outro: TAKE CONTROL → hold → backspace → AND SAVE → hold → backspace → DATAPHANTOM → hold
   if (outro) {
     let displayText = "";
     let showCursor = false;
     if (frame < OUTRO_PHASE1_END) {
-      const visible = Math.min(OUTRO_TEXT_1.length, Math.max(0, Math.floor((frame - TYPE_START) / FRAMES_PER_CHAR)));
-      displayText = OUTRO_TEXT_1.slice(0, visible);
+      const visible = Math.min(OUTRO_A.length, Math.max(0, Math.floor((frame - TYPE_START) / FRAMES_PER_CHAR)));
+      displayText = OUTRO_A.slice(0, visible);
       showCursor = cursorBlink && visible > 0;
     } else if (frame < OUTRO_PHASE1_HOLD_END) {
-      displayText = OUTRO_TEXT_1;
+      displayText = OUTRO_A;
       showCursor = cursorBlink;
     } else if (frame < OUTRO_PHASE2_END) {
       const backspaced = Math.floor((frame - OUTRO_PHASE1_HOLD_END) / FRAMES_PER_CHAR_BACKSPACE);
-      const visible = Math.max(0, OUTRO_TEXT_1.length - backspaced);
-      displayText = OUTRO_TEXT_1.slice(0, visible);
+      const visible = Math.max(0, OUTRO_A.length - backspaced);
+      displayText = OUTRO_A.slice(0, visible);
+      showCursor = cursorBlink && visible > 0;
+    } else if (frame < OUTRO_PHASE3_END) {
+      const visible = Math.min(OUTRO_B.length, Math.max(0, Math.floor((frame - OUTRO_PHASE2_END) / FRAMES_PER_CHAR)));
+      displayText = OUTRO_B.slice(0, visible);
+      showCursor = cursorBlink && visible > 0;
+    } else if (frame < OUTRO_PHASE3_HOLD_END) {
+      displayText = OUTRO_B;
+      showCursor = cursorBlink;
+    } else if (frame < OUTRO_PHASE4_END) {
+      const backspaced = Math.floor((frame - OUTRO_PHASE3_HOLD_END) / FRAMES_PER_CHAR_BACKSPACE);
+      const visible = Math.max(0, OUTRO_B.length - backspaced);
+      displayText = OUTRO_B.slice(0, visible);
       showCursor = cursorBlink && visible > 0;
     } else {
-      const visible = Math.min(OUTRO_TEXT_2.length, Math.max(0, Math.floor((frame - OUTRO_PHASE2_END) / FRAMES_PER_CHAR)));
+      const visible = Math.min(OUTRO_TEXT_2.length, Math.max(0, Math.floor((frame - OUTRO_PHASE4_END) / FRAMES_PER_CHAR)));
       displayText = OUTRO_TEXT_2.slice(0, visible);
       showCursor = cursorBlink && visible > 0;
     }
@@ -146,14 +168,28 @@ const TitleCard: React.FC<{ text: string; outro?: boolean; thenText?: string }> 
           }}
         >
           <div style={{ fontSize: baseFontSize, letterSpacing: 4, lineHeight: 1.4 }}>
-            {frame >= OUTRO_PHASE2_END ? (() => {
-              const v = Math.min(OUTRO_TEXT_2.length, Math.max(0, Math.floor((frame - OUTRO_PHASE2_END) / FRAMES_PER_CHAR)));
+            {frame >= OUTRO_PHASE4_END ? (() => {
+              const v = Math.min(OUTRO_TEXT_2.length, Math.max(0, Math.floor((frame - OUTRO_PHASE4_END) / FRAMES_PER_CHAR)));
               const dataVisible = Math.min(OUTRO_DATA_LEN, v);
               const phantomVisible = Math.max(0, v - OUTRO_DATA_LEN);
+              const fullLogo = v === OUTRO_TEXT_2.length;
+              const afterTyping = frame >= OUTRO_PHASE5_END;
+              const glitchFrame = frame - OUTRO_PHASE5_END - OUTRO_GLITCH_DELAY;
+              const inGlitch = fullLogo && afterTyping && glitchFrame >= 0 && glitchFrame < OUTRO_GLITCH_FRAMES;
+              const gx = inGlitch
+                ? GLITCH_PX *
+                  interpolate(glitchFrame, [0, 1.8, 3.6, 5.4, 7.2, 9], [0, -2, 2, -1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+                : 0;
+              const gy = inGlitch
+                ? GLITCH_PX *
+                  interpolate(glitchFrame, [0, 1.8, 3.6, 5.4, 7.2, 9], [0, 1, -1, -1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+                : 0;
               return (
                 <>
-                  {OUTRO_TEXT_2.slice(0, dataVisible)}
-                  <span style={{ opacity: 0.55 }}>{OUTRO_TEXT_2.slice(OUTRO_DATA_LEN, OUTRO_DATA_LEN + phantomVisible)}</span>
+                  <span style={{ display: "inline-block", transform: `translate(${gx}px, ${gy}px)` }}>
+                    {OUTRO_TEXT_2.slice(0, dataVisible)}
+                    <span style={{ opacity: 0.55 }}>{OUTRO_TEXT_2.slice(OUTRO_DATA_LEN, OUTRO_DATA_LEN + phantomVisible)}</span>
+                  </span>
                   <span style={{ visibility: showCursor ? "visible" : "hidden" }}>|</span>
                 </>
               );
